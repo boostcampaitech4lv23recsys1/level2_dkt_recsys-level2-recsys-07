@@ -106,6 +106,7 @@ class Preprocess:
             .groupby("userID")
             .apply(
                 lambda r: (
+
                     r["testId"].values,
                     r["assessmentItemID"].values,
                     r["KnowledgeTag"].values,

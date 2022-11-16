@@ -13,7 +13,7 @@ def main(args):
     test_data = preprocess.get_test_data()
     model = trainer.get_model(args).to(args.device)
     trainer.inference(args, test_data, model)
-
+    
 
 if __name__ == "__main__":
     args = parse_args()

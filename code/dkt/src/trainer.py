@@ -1,5 +1,6 @@
 import math
 import os
+import re
 
 import torch
 import wandb
@@ -37,6 +38,7 @@ def run(args, train_data, valid_data, model):
 
         ### VALID
         auc, acc = validate(valid_loader, model, args)
+        wandb.run.name = f"{args.model}".upper()
 
         ### TODO: model save or early stopping
         wandb.log(
@@ -49,6 +51,17 @@ def run(args, train_data, valid_data, model):
                 "valid_acc_epoch": acc,
             }
         )
+
+        # 특정 모델의 제일 최신 버전으로 생성
+        max_cnt = 0
+        for i in os.listdir(args.model_dir):
+            # in이 아닌 == re를 쓰는 이유 : in을 쓰면 LSTM이 LSTM, LSTMATTN에 혼동될 수 있음
+            if model._get_name().lower().strip() == re.findall(r'[A-Z]+', i)[0].lower().strip():
+                cnt = int(re.findall(r'[0-9]+',i)[0])
+                if max_cnt < cnt:
+                    max_cnt = cnt
+
+
         if auc > best_auc:
             best_auc = auc
             # torch.nn.DataParallel로 감싸진 경우 원래의 model을 가져옵니다.
@@ -59,7 +72,8 @@ def run(args, train_data, valid_data, model):
                     "state_dict": model_to_save.state_dict(),
                 },
                 args.model_dir,
-                "model.pt",
+                # "model.pt"
+                f"{model._get_name().upper()}_{max_cnt}.pt"
             )
             early_stopping_counter = 0
         else:
@@ -156,7 +170,16 @@ def inference(args, test_data, model):
         preds = preds.cpu().detach().numpy()
         total_preds += list(preds)
 
-    write_path = os.path.join(args.output_dir, "submission.csv")
+    # 특정 모델의 제일 최신 버전으로 생성
+    max_cnt = 0
+    for i in os.listdir(args.output_dir):
+        # in이 아닌 == re를 쓰는 이유 : in을 쓰면 LSTM이 LSTM, LSTMATTN에 혼동될 수 있음
+        if model._get_name().lower().strip() == re.findall(r'[A-Z]+', i)[0].lower().strip():
+            cnt = int(re.findall(r'[0-9]+',i)[0])
+            if max_cnt < cnt:
+                max_cnt = cnt
+
+    write_path = os.path.join(args.output_dir, f"{model._get_name().upper()}_submission_{max_cnt}.csv")
     if not os.path.exists(args.output_dir):
         os.makedirs(args.output_dir)
     with open(write_path, "w", encoding="utf8") as w:
@@ -169,6 +192,7 @@ def get_model(args):
     """
     Load model and move tensors to a given devices.
     """
+    args.model = str.lower(args.model)
     if args.model == "lstm":
         model = LSTM(args)
     if args.model == "lstmattn":

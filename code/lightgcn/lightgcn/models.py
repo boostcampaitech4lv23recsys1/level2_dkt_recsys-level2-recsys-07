@@ -26,7 +26,7 @@ def train(
     valid_data=None,
     n_epoch=100,
     learning_rate=0.01,
-    use_wandb=False,
+    use_wandb=True,
     weight=None,
     logger=None,
 ):
@@ -66,7 +66,7 @@ def train(
             )
             if use_wandb:
                 import wandb
-
+                wandb.run.name = model._get_name()
                 wandb.log(dict(loss=loss, acc=acc, auc=auc))
 
         if weight:
