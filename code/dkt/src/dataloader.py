@@ -8,6 +8,7 @@ import pandas as pd
 import torch
 import tqdm
 from sklearn.preprocessing import LabelEncoder
+from sklearn.model_selection import KFold
 
 
 class Preprocess:
@@ -22,17 +23,22 @@ class Preprocess:
     def get_test_data(self):
         return self.test_data
 
-    def split_data(self, data, ratio=0.7, shuffle=True, seed=0):
+    def split_data(self, data, ratio=0.8, shuffle=True, seed=0):
         """
         split data into two parts with a given ratio.
         """
-        if shuffle:
-            random.seed(seed)  # fix to default seed 0
-            random.shuffle(data)
+        kf = KFold(n_splits=5, shuffle=True, random_state=seed)
+        kf.get_n_splits(data)
+        for train_index, test_index in kf.split(data):
+            data_1, data_2 = data[train_index], data[test_index] 
 
-        size = int(len(data) * ratio)
-        data_1 = data[:size]
-        data_2 = data[size:]
+        # if shuffle:
+        #     random.seed(seed)  # fix to default seed 0
+        #     random.shuffle(data)
+
+        # size = int(len(data) * ratio)
+        # data_1 = data[:size]
+        # data_2 = data[size:]
 
         return data_1, data_2
 
