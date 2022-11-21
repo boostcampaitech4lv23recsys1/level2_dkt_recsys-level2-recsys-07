@@ -1,6 +1,7 @@
 # ====================================================
 # CFG
 # ====================================================
+import random
 class CFG:
     use_cuda_if_available = True
     user_wandb = True
@@ -25,6 +26,10 @@ class CFG:
     n_epoch = 20
     learning_rate = 0.001
     weight_basepath = "./weight"
+    
+    # run name
+    rand = int(random.random()*100)
+    run_name = f'lightgcn, embedding_dim {embedding_dim}, num_layers {num_layers}, n_epoch {n_epoch}, learning_rate {learning_rate}, __{rand}__'
 
 
 logging_conf = {  # only used when 'user_wandb==False'
