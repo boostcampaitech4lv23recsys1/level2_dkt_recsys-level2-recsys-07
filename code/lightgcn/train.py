@@ -8,7 +8,8 @@ from lightgcn.utils import class2dict, get_logger
 if CFG.user_wandb:
     import wandb
 
-    wandb.init(**CFG.wandb_kwargs, config=class2dict(CFG))
+    # wandb.init(**CFG.wandb_kwargs, config=class2dict(CFG))
+    wandb.init(**CFG.wandb_kwargs, config=class2dict(CFG), name=CFG.run_name)
     
     
 
