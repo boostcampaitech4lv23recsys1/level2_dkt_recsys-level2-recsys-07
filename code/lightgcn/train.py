@@ -2,13 +2,16 @@ import pandas as pd
 import torch
 from config import CFG, logging_conf
 from lightgcn.datasets import prepare_dataset
-from lightgcn.models import build, train
+from lightgcn.models import build, train, train_with_scheduler
 from lightgcn.utils import class2dict, get_logger
 
 if CFG.user_wandb:
     import wandb
 
-    wandb.init(**CFG.wandb_kwargs, config=class2dict(CFG))
+    # wandb.init(**CFG.wandb_kwargs, config=class2dict(CFG))
+    wandb.init(**CFG.wandb_kwargs, config=class2dict(CFG), name=CFG.run_name)
+    
+    
 
 
 logger = get_logger(logging_conf)
@@ -43,7 +46,16 @@ def main():
     logger.info("[2/2] Model Building - Done")
 
     logger.info("[3/3] Model Training - Start")
-    train(
+    # train(
+    #     model,
+    #     train_data,
+    #     n_epoch=CFG.n_epoch,
+    #     learning_rate=CFG.learning_rate,
+    #     use_wandb=CFG.user_wandb,
+    #     weight=CFG.weight_basepath,
+    #     logger=logger.getChild("train"),
+    # )
+    train_with_scheduler(
         model,
         train_data,
         n_epoch=CFG.n_epoch,
