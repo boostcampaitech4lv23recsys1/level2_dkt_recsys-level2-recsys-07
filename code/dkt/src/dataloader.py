@@ -8,7 +8,6 @@ import pandas as pd
 import torch
 import tqdm
 from sklearn.preprocessing import LabelEncoder
-from sklearn.model_selection import KFold
 
 
 class Preprocess:
@@ -23,22 +22,19 @@ class Preprocess:
     def get_test_data(self):
         return self.test_data
 
-    def split_data(self, data, ratio=0.8, shuffle=True, seed=0):
+    def split_data(self, args, data, ratio=0.8, shuffle=True):
         """
         split data into two parts with a given ratio.
         """
-        kf = KFold(n_splits=5, shuffle=True, random_state=seed)
-        kf.get_n_splits(data)
-        for train_index, test_index in kf.split(data):
-            data_1, data_2 = data[train_index], data[test_index] 
+        self.args = args
+        self.seed = args.split_seed
+        if shuffle:
+            random.seed(self.seed)  # fix to default seed 0
+            random.shuffle(data)
 
-        # if shuffle:
-        #     random.seed(seed)  # fix to default seed 0
-        #     random.shuffle(data)
-
-        # size = int(len(data) * ratio)
-        # data_1 = data[:size]
-        # data_2 = data[size:]
+        size = int(len(data) * ratio)
+        data_1 = data[:size]
+        data_2 = data[size:]
 
         return data_1, data_2
 
@@ -47,6 +43,7 @@ class Preprocess:
         np.save(le_path, encoder.classes_)
 
     def __preprocessing(self, df, is_train=True):
+        # cate_cols = ["assessmentItemID", "testId", "KnowledgeTag", "past_count", "total_count", "past_correct", "average_correct"]
         cate_cols = ["assessmentItemID", "testId", "KnowledgeTag"]
 
         if not os.path.exists(self.args.asset_dir):
@@ -85,12 +82,25 @@ class Preprocess:
 
     def __feature_engineering(self, df):
         # TODO
+        # 푼 문제 수 누적합
+        df['past_count'] = df.groupby('userID').cumcount()
+        # user별 푼 문제 총합
+        total_count = df.groupby('userID')[['testId']].count().rename(columns={"testId":"total_count"})
+        df = pd.merge(df, total_count, on='userID', how='left')
+        # 과거에 맞춘 문제 수
+        df['shift'] = df.groupby('userID')['answerCode'].shift().fillna(0)
+        df['past_correct'] = df.groupby('userID')['shift'].cumsum()
+        # 과거 평균 정답률
+        df['average_correct'] = (df['past_correct'] / df['past_count']).fillna(0)
+
+        df = df.drop(['shift'], axis=1)
+
         return df
 
     def load_data_from_file(self, file_name, is_train=True):
         csv_file_path = os.path.join(self.args.data_dir, file_name)
         df = pd.read_csv(csv_file_path)  # , nrows=100000)
-        df = self.__feature_engineering(df)
+        # df = self.__feature_engineering(df)
         df = self.__preprocessing(df, is_train)
 
         # 추후 feature를 embedding할 시에 embedding_layer의 input 크기를 결정할때 사용
@@ -104,8 +114,23 @@ class Preprocess:
         self.args.n_tag = len(
             np.load(os.path.join(self.args.asset_dir, "KnowledgeTag_classes.npy"))
         )
+        # self.args.past_count = len(
+        #     np.load(os.path.join(self.args.asset_dir, "past_count_classes.npy"))
+        # )
+        # self.args.total_count = len(
+        #     np.load(os.path.join(self.args.asset_dir, "total_count_classes.npy"))
+        # )
+        # self.args.past_correct = len(
+        #     np.load(os.path.join(self.args.asset_dir, "past_correct_classes.npy"))
+        # )
+        # self.args.average_correct = len(
+        #     np.load(os.path.join(self.args.asset_dir, "average_correct_classes.npy"))
+        # )
+
 
         df = df.sort_values(by=["userID", "Timestamp"], axis=0)
+        # columns = ["userID", "assessmentItemID", "testId", "answerCode", "KnowledgeTag",
+        #         "past_count", "total_count", "past_correct", "average_correct"]
         columns = ["userID", "assessmentItemID", "testId", "answerCode", "KnowledgeTag"]
         group = (
             df[columns]
@@ -117,6 +142,10 @@ class Preprocess:
                     r["assessmentItemID"].values,
                     r["KnowledgeTag"].values,
                     r["answerCode"].values,
+                    # r["past_count"].values,
+                    # r["total_count"].values,
+                    # r["past_correct"].values,
+                    # r["average_correct"].values,
                 )
             )
         )
@@ -141,8 +170,10 @@ class DKTDataset(torch.utils.data.Dataset):
         # 각 data의 sequence length
         seq_len = len(row[0])
 
+        # test, question, tag, correct, p_count, t_count, p_correct, a_correct = row[0], row[1], row[2], row[3], row[4], row[5], row[6], row[7]
         test, question, tag, correct = row[0], row[1], row[2], row[3]
 
+        # cate_cols = [test, question, tag, correct, p_count, t_count, p_correct, a_correct]
         cate_cols = [test, question, tag, correct]
 
         # max seq len을 고려하여서 이보다 길면 자르고 아닐 경우 그대로 냅둔다
