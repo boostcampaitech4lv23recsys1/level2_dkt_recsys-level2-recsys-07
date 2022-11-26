@@ -7,9 +7,10 @@ import wandb
 from .criterion import get_criterion
 from .dataloader import get_loaders
 from .metric import get_metric
-from .model import LSTM, LSTMATTN, Bert
+from .model import LSTM, LSTMATTN, Bert, CustomBert
 from .optimizer import get_optimizer
 from .scheduler import get_scheduler
+from datetime import datetime
 
 
 def run(args, train_data, valid_data, model):
@@ -46,6 +47,69 @@ def run(args, train_data, valid_data, model):
                 "train_auc_epoch": train_auc,
                 "train_acc_epoch": train_acc,
                 "valid_auc_epoch": auc,
+                "valid_acc_epoch": acc,
+            }
+        )
+        if auc > best_auc:
+            best_auc = auc
+            # torch.nn.DataParallel로 감싸진 경우 원래의 model을 가져옵니다.
+            model_to_save = model.module if hasattr(model, "module") else model
+            save_checkpoint(
+                {
+                    "epoch": epoch + 1,
+                    "state_dict": model_to_save.state_dict(),
+                },
+                args.model_dir,
+                "model.pt",
+            )
+            early_stopping_counter = 0
+        else:
+            early_stopping_counter += 1
+            if early_stopping_counter >= args.patience:
+                print(
+                    f"EarlyStopping counter: {early_stopping_counter} out of {args.patience}"
+                )
+                break
+
+        # scheduler
+        if args.scheduler == "plateau":
+            scheduler.step(best_auc)
+            
+            
+def run_with_vaild_loss(args, train_data, valid_data, model):
+    train_loader, valid_loader = get_loaders(args, train_data, valid_data)
+
+    # only when using warmup scheduler
+    args.total_steps = int(math.ceil(len(train_loader.dataset) / args.batch_size)) * (
+        args.n_epochs
+    )
+    args.warmup_steps = args.total_steps // 10
+
+    optimizer = get_optimizer(model, args)
+    scheduler = get_scheduler(optimizer, args)
+
+    best_auc = -1
+    early_stopping_counter = 0
+    for epoch in range(args.n_epochs):
+
+        print(f"Start Training: Epoch {epoch + 1}")
+
+        ### TRAIN
+        train_auc, train_acc, train_loss = train(
+            train_loader, model, optimizer, scheduler, args
+        )
+
+        ### VALID
+        auc, acc, loss = validate(valid_loader, model, args)
+
+        ### TODO: model save or early stopping
+        wandb.log(
+            {
+                "train_loss_epoch": train_loss,
+                "valid_loss_epoch": loss,
+                "train_auc_epoch": train_auc,
+                "valid_auc_epoch": auc,
+                "train_acc_epoch": train_acc,
                 "valid_acc_epoch": acc,
             }
         )
@@ -115,6 +179,39 @@ def validate(valid_loader, model, args):
 
     total_preds = []
     total_targets = []
+    losses = []
+    for step, batch in enumerate(valid_loader):
+        input = list(map(lambda t: t.to(args.device), process_batch(batch)))
+
+        preds = model(input)
+        targets = input[3]  # correct
+        
+        loss = compute_loss(preds, targets)
+
+        # predictions
+        preds = preds[:, -1]
+        targets = targets[:, -1]
+
+        total_preds.append(preds.detach())
+        total_targets.append(targets.detach())
+        losses.append(loss)
+
+    total_preds = torch.concat(total_preds).cpu().numpy()
+    total_targets = torch.concat(total_targets).cpu().numpy()
+
+    # Train AUC / ACC
+    auc, acc = get_metric(total_targets, total_preds)
+
+    print(f"VALID AUC : {auc} ACC : {acc}\n")
+    loss_avg = sum(losses) / len(losses)
+    return auc, acc, loss_avg
+
+
+def validate_with_loss(valid_loader, model, args):
+    model.eval()
+
+    total_preds = []
+    total_targets = []
     for step, batch in enumerate(valid_loader):
         input = list(map(lambda t: t.to(args.device), process_batch(batch)))
 
@@ -153,10 +250,13 @@ def inference(args, test_data, model):
 
         # predictions
         preds = preds[:, -1]
+        preds = torch.nn.Sigmoid()(preds)
         preds = preds.cpu().detach().numpy()
         total_preds += list(preds)
 
-    write_path = os.path.join(args.output_dir, "submission.csv")
+    time = datetime.now().strftime('%Y%m%d%H%M%S')
+    model_name = args.model
+    write_path = os.path.join(args.output_dir, time + "_" + model_name + ".csv")
     if not os.path.exists(args.output_dir):
         os.makedirs(args.output_dir)
     with open(write_path, "w", encoding="utf8") as w:
@@ -175,6 +275,9 @@ def get_model(args):
         model = LSTMATTN(args)
     if args.model == "bert":
         model = Bert(args)
+    if args.model == "custombert":
+        model = CustomBert(args)
+    
 
     return model
 
