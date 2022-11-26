@@ -154,6 +154,9 @@ def train_with_scheduler(
     )
     logger.info(f"Best Weight Confirmed : {best_epoch+1}'th epoch")   
     
+    np.save('/opt/ml/input/code/lightgcn/lightgcn/assets/embedding.npy', model.embedding)
+    print("Embedding Saved")
+    
 def inference(model, data, logger=None):
     model.eval()
     with torch.no_grad():
