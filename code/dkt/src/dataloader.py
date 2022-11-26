@@ -27,18 +27,14 @@ class Preprocess:
         """
         split data into two parts with a given ratio.
         """
-        kf = KFold(n_splits=5, shuffle=True, random_state=seed)
-        kf.get_n_splits(data)
-        for train_index, test_index in kf.split(data):
-            data_1, data_2 = data[train_index], data[test_index] 
 
-        # if shuffle:
-        #     random.seed(seed)  # fix to default seed 0
-        #     random.shuffle(data)
+        if shuffle:
+            random.seed(seed)  # fix to default seed 0
+            random.shuffle(data)
 
-        # size = int(len(data) * ratio)
-        # data_1 = data[:size]
-        # data_2 = data[size:]
+        size = int(len(data) * ratio)
+        data_1 = data[:size]
+        data_2 = data[size:]
 
         return data_1, data_2
 
@@ -48,10 +44,12 @@ class Preprocess:
 
     def __preprocessing(self, df, is_train=True):
         cate_cols = ["assessmentItemID", "testId", "KnowledgeTag"]
+        
 
         if not os.path.exists(self.args.asset_dir):
             os.makedirs(self.args.asset_dir)
-
+        
+        
         for col in cate_cols:
 
             le = LabelEncoder()
