@@ -15,27 +15,53 @@ def cat_data_load(args):
 
     train['past_count'] = train.groupby('userID').cumcount()
     # user별 푼 문제 총합
-    # total_count = train.groupby('userID')[['testId']].count().rename(columns={"testId":"total_count"})
-    # train = pd.merge(train, total_count, on='userID', how='left')
+    total_count = train.groupby('userID')[['testId']].count().rename(columns={"testId":"total_count"})
+    train = pd.merge(train, total_count, on='userID', how='left')
+    # user별 푼 시험지, 문제, 태그 종류 수
+    test_count = train.groupby('userID')[['testId']].nunique().rename(columns={"testId":"test_count"})
+    assess_count = train.groupby('userID')[['assessmentItemID']].nunique().rename(columns={"assessmentItemID":"assess_count"})
+    tag_count = train.groupby('userID')[['KnowledgeTag']].nunique().rename(columns={"KnowledgeTag":"tag_count"})
+    test_correct = (train.groupby('testId')[['answerCode']].sum()*10000 / 
+                train.groupby('testId')[['answerCode']].count()).rename(columns={'answerCode':'test_correct'})
+    assess_correct = (train.groupby('assessmentItemID')[['answerCode']].sum()*10000 / 
+                    train.groupby('assessmentItemID')[['answerCode']].count()).rename(columns={'answerCode':'assess_correct'})
+    train = pd.merge(train, test_count, on='userID', how='left')
+    train = pd.merge(train, assess_count, on='userID', how='left')
+    train = pd.merge(train, tag_count, on='userID', how='left')
+    train = pd.merge(train, test_correct, on='testId', how='left')
+    train = pd.merge(train, assess_correct, on='assessmentItemID', how='left')
+    train['test_correct'] = train['test_correct'].fillna(0).astype(int)
+    train['assess_correct'] = train['assess_correct'].fillna(0).astype(int)
+
     # 과거에 맞춘 문제 수
     train['shift'] = train.groupby('userID')['answerCode'].shift().fillna(0)
-    train['past_correct'] = train.groupby('userID')['shift'].cumsum()
+    train['past_correct'] = train.groupby('userID')['shift'].cumsum().astype(int)
     train = train.drop(['shift'], axis=1)
     # 과거 평균 정답률
-    train['average_correct'] = (train['past_correct'] / train['past_count']).fillna(0)
+    # train['average_correct'] = (train['past_correct'] / train['past_count']).fillna(0).astype(int)
+    train['avg_cor'] = (train.groupby(['userID'])['answerCode'].sum()*10000 / train.groupby(['userID'])['answerCode'].count())
+    train['avg_cor'] = train['avg_cor'].fillna(0).astype(int)
 
-    # test["past_count"] = train.groupby("userID")["past_count"].mean()
-    # test["total_count"] = train.groupby("userID")["total_count"].count()
-    # test["past_correct"] = train.groupby("userID")["past_correct"].mean()
-    test["average_correct"] = train.groupby("userID")["average_correct"].mean()
+    test["past_count"] = train.groupby("userID")["past_count"].mean()
+    test["total_count"] = train.groupby("userID")["total_count"].count()
+    test = pd.merge(test, test_count, on='userID', how='left')
+    test = pd.merge(test, assess_count, on='userID', how='left')
+    test = pd.merge(test, tag_count, on='userID', how='left')
+    test = pd.merge(test, test_correct, on='testId', how='left')
+    test = pd.merge(test, assess_correct, on='assessmentItemID', how='left')
+    test['test_correct'] = test['test_correct'].fillna(0).astype(int)
+    test['assess_correct'] = test['assess_correct'].fillna(0).astype(int)
 
-    # test["past_count"] = test["past_count"].fillna(0).astype(int)
-    # test["total_count"] = test["total_count"].fillna(0).astype(int)
-    # test["past_correct"] = test["past_correct"].fillna(0).astype(int)
-    test["average_correct"] = test["average_correct"].fillna(0).astype(int)
+    test["past_correct"] = train.groupby("userID")["past_correct"].mean()
+    # test["average_correct"] = train.groupby("userID")["average_correct"].mean()
+    test["avg_cor"] = train.groupby("userID")["avg_cor"].mean()
 
-    # cate_cols = ["assessmentItemID", "testId", "KnowledgeTag", 'past_count', "total_count", "past_correct", "average_correct"]
-    cate_cols = ["assessmentItemID", "testId", "KnowledgeTag", "average_correct"]
+    test["past_count"] = test["past_count"].fillna(0).astype(int)
+    test["past_correct"] = test["past_correct"].fillna(0).astype(int)
+    # test["average_correct"] = test["average_correct"].fillna(0).astype(int)
+    test['avg_cor'] = test["avg_cor"].fillna(0).astype(int)
+
+    cate_cols = ["assessmentItemID", "testId", "KnowledgeTag"]
     
     for col in cate_cols:
         le = LabelEncoder()
@@ -50,14 +76,13 @@ def cat_data_load(args):
         trans = le.transform(train[col])
         train[col] = trans
         
-        if col in ["assessmentItemID", "testId", "KnowledgeTag"]:
-            test[col] = test[col].astype(str)
-            trans = le.transform(test[col])
-            test[col] = trans
+        test[col] = test[col].astype(str)
+        trans = le.transform(test[col])
+        test[col] = trans
 
 
-    train = train.drop(['Timestamp', 'past_count', "past_correct"], axis=1)
-    test = test.drop(['answerCode', 'Timestamp'], axis=1)
+    train = train.drop(['Timestamp', "past_count", "assess_count", "past_correct"], axis=1)
+    test = test.drop(['answerCode', 'Timestamp', "past_count", "assess_count", "past_correct"], axis=1)
 
     data = {
             'train': train,
