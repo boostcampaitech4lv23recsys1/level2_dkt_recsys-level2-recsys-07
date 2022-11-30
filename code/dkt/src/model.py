@@ -80,15 +80,21 @@ class LSTMATTN(nn.Module):
 
         # Embedding
         # interaction은 현재 correct로 구성되어있다. correct(1, 2) + padding(0)
-        self.embedding_interaction = nn.Embedding(3, self.hidden_dim // 3)
-        self.embedding_test = nn.Embedding(self.args.n_test + 1, self.hidden_dim // 3)
+        self.embedding_interaction = nn.Embedding(3, self.hidden_dim // 2)
+        self.embedding_test = nn.Embedding(self.args.n_test + 1, self.hidden_dim // 2)
         self.embedding_question = nn.Embedding(
-            self.args.n_questions + 1, self.hidden_dim // 3
+            self.args.n_questions + 1, self.hidden_dim // 2
         )
-        self.embedding_tag = nn.Embedding(self.args.n_tag + 1, self.hidden_dim // 3)
+        self.embedding_tag = nn.Embedding(self.args.n_tag + 1, self.hidden_dim // 2)
+        # self.embedding_total_count = nn.Embedding(self.args.total_count + 1, self.hidden_dim // 2)          #TODO
+        # self.embedding_test_count = nn.Embedding(self.args.test_count + 1, self.hidden_dim // 2)
+        # self.embedding_tag_count = nn.Embedding(self.args.tag_count + 1, self.hidden_dim // 2)
+        # self.embedding_test_correct = nn.Embedding(self.args.test_correct + 1, self.hidden_dim // 2)
+        # self.embedding_assess_correct = nn.Embedding(self.args.assess_correct + 1, self.hidden_dim // 2)
+        # self.embedding_avg_cor = nn.Embedding(self.args.avg_cor + 1, self.hidden_dim // 2)
 
         # embedding combination projection
-        self.comb_proj = nn.Linear((self.hidden_dim // 3) * 4, self.hidden_dim)
+        self.comb_proj = nn.Linear((self.hidden_dim // 2) * 4, self.hidden_dim)        #TODO
 
         self.lstm = nn.LSTM(
             self.hidden_dim, self.hidden_dim, self.n_layers, batch_first=True
@@ -112,7 +118,8 @@ class LSTMATTN(nn.Module):
 
     def forward(self, input):
 
-        test, question, tag, _, mask, interaction = input
+        # test, question, tag, _, total_cnt, test_cnt, tag_cnt, test_cor, ass_cor, avg_cor, mask, interaction = input
+        test, question, tag, _, mask, interaction = input #TODO
 
         batch_size = interaction.size(0)
 
@@ -121,6 +128,13 @@ class LSTMATTN(nn.Module):
         embed_test = self.embedding_test(test)
         embed_question = self.embedding_question(question)
         embed_tag = self.embedding_tag(tag)
+        # embed_total_cnt = self.embedding_total_count(total_cnt)     #TODO
+        # embed_test_cnt = self.embedding_test_count(test_cnt)
+        # embed_tag_cnt = self.embedding_tag_count(tag_cnt)
+        # embed_test_cor = self.embedding_test_correct(test_cor)
+        # embed_ass_cor = self.embedding_assess_correct(ass_cor)
+        # embed_avg_cor = self.embedding_avg_cor(avg_cor)
+
 
         embed = torch.cat(
             [
@@ -128,6 +142,12 @@ class LSTMATTN(nn.Module):
                 embed_test,
                 embed_question,
                 embed_tag,
+                # embed_total_cnt,        #TODO
+                # embed_test_cnt,
+                # embed_tag_cnt,
+                # embed_test_cor,
+                # embed_ass_cor,
+                # embed_avg_cor,
             ],
             2,
         )
