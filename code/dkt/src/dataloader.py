@@ -26,10 +26,9 @@ class Preprocess:
         """
         split data into two parts with a given ratio.
         """
-        self.args = args
-        self.seed = args.split_seed
+
         if shuffle:
-            random.seed(self.seed)  # fix to default seed 0
+            random.seed(seed)  # fix to default seed 0
             random.shuffle(data)
 
         size = int(len(data) * ratio)
@@ -45,10 +44,12 @@ class Preprocess:
     def __preprocessing(self, df, is_train=True):
         # cate_cols = df.columns.tolist()
         cate_cols = ["assessmentItemID", "testId", "KnowledgeTag"]
+        
 
         if not os.path.exists(self.args.asset_dir):
             os.makedirs(self.args.asset_dir)
-
+        
+        
         for col in cate_cols:
 
             le = LabelEncoder()

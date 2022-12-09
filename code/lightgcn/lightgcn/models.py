@@ -147,12 +147,16 @@ def train_with_scheduler(
                     {"model": model.state_dict(), "epoch": e + 1},
                     os.path.join(weight, f"best_model.pt"),
                 )
+                np.save('/opt/ml/input/code/lightgcn/lightgcn/assets/embedding.npy', model.embedding)
+                print("Embedding Saved")
         scheduler.step(best_auc)
     torch.save(
         {"model": model.state_dict(), "epoch": e + 1},
         os.path.join(weight, f"last_model.pt"),
     )
     logger.info(f"Best Weight Confirmed : {best_epoch+1}'th epoch")   
+    
+    
     
 def inference(model, data, logger=None):
     model.eval()

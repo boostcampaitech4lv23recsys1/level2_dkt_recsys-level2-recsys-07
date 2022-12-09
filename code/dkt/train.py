@@ -7,7 +7,7 @@ from args import parse_args
 from src import trainer
 from src.dataloader import Preprocess
 from src.utils import setSeeds
-from sklearn.model_selection import KFold
+from datetime import datetime
 
 
 def main(args):
@@ -22,21 +22,11 @@ def main(args):
 
     # train_data, valid_data = preprocess.split_data(args, train_data)
 
-    wandb.init(project="dkt", config=vars(args))
+    name = datetime.now().strftime('%H%M%S')+"_"+ args.model
+    wandb.init(project="dkt", config=vars(args), name=name)
     model = trainer.get_model(args).to(args.device)
     # trainer.run(args, train_data, valid_data, model)
-
-    kf = KFold(n_splits=5, shuffle=True, random_state=1)
-    cnt = 1
-    for train_idx, valid_idx in kf.split(train_data):
-        print(f'===================================  iter: {cnt}  ===================================\n')
-        train = np.array([train_data[i] for i in train_idx]).squeeze()
-        valid = np.array([train_data[valid_idx]]).squeeze()
-        # valid = valid[valid['userID'] != valid['userID'].shift(-1)]
-
-        trainer.run(args, train, valid, model)
-
-        cnt += 1
+    trainer.run_with_vaild_loss(args, train_data, valid_data, model)
 
 
 if __name__ == "__main__":
