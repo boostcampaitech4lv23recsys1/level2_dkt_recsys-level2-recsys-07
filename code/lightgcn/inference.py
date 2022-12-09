@@ -6,7 +6,9 @@ from config import CFG, logging_conf
 from lightgcn.datasets import prepare_dataset
 from lightgcn.models import build, inference
 from lightgcn.utils import get_logger
+from args import parse_args
 
+CFG = parse_args()
 logger = get_logger(logging_conf)
 use_cuda = torch.cuda.is_available() and CFG.use_cuda_if_available
 device = torch.device("cuda" if use_cuda else "cpu")
