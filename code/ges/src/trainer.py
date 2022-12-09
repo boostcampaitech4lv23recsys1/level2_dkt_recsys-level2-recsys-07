@@ -5,7 +5,8 @@ import torch
 import wandb
 
 from .criterion import get_criterion
-from .dataloader import get_loaders
+from .dataloader import get_loaders, get_GES_loaders
+
 from .metric import get_metric
 from .model import *
 from .optimizer import get_optimizer
@@ -15,6 +16,7 @@ from datetime import datetime
 
 def run(args, train_data, valid_data, model):
     train_loader, valid_loader = get_loaders(args, train_data, valid_data)
+    
 
     # only when using warmup scheduler
     args.total_steps = int(math.ceil(len(train_loader.dataset) / args.batch_size)) * (
@@ -77,7 +79,7 @@ def run(args, train_data, valid_data, model):
             
             
 def run_with_vaild_loss(args, train_data, valid_data, model):
-    train_loader, valid_loader = get_loaders(args, train_data, valid_data)
+    train_loader, valid_loader = get_GES_loaders(args, train_data, valid_data)
 
     # only when using warmup scheduler
     args.total_steps = int(math.ceil(len(train_loader.dataset) / args.batch_size)) * (
@@ -239,7 +241,7 @@ def validate_with_loss(valid_loader, model, args):
 def inference(args, test_data, model):
 
     model.eval()
-    _, test_loader = get_loaders(args, None, test_data)
+    _, test_loader = get_GES_loaders(args, None, test_data)
 
     total_preds = []
 
@@ -288,7 +290,7 @@ def get_model(args, adj_matrix):
 # 배치 전처리
 def process_batch(batch):
 
-    test, question, tag, correct, mask = batch
+    test, question, tag, correct, mask, user_mean, user_acc, elap_time, recent3_elap_time, elo_prob, assess_ans_mean, prefix = batch
 
     # change to float
     mask = mask.float()
@@ -306,7 +308,8 @@ def process_batch(batch):
     question = ((question + 1) * mask).int()
     tag = ((tag + 1) * mask).int()
 
-    return (test, question, tag, correct, mask, interaction)
+    return (test, question, tag, correct, mask, interaction, user_mean, user_acc, elap_time, recent3_elap_time, elo_prob, assess_ans_mean, prefix)
+
 
 
 # loss계산하고 parameter update!

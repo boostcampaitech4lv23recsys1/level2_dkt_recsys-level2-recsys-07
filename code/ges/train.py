@@ -32,35 +32,25 @@ def main(args):
     
     print('Model preparing...')
     
-    preprocess = Preprocess(args)
+    preprocess = Preprocess(args=args)
     preprocess.load_train_data(args.file_name)
     train_data = preprocess.get_train_data()
 
     train_data, valid_data = preprocess.split_data(train_data)
     
-    name_dict = {'model': args.model,
-                 'n_epochs': args.n_epochs,
-                 'batch_size': args.batch_size,
-                 'lr': args.lr,
-                 'max_seq_len': args.max_seq_len,
-                 'hidden_dim': args.hidden_dim,
-                 'n_layers': args.n_layers,
-                 'gcn_n_layes': args.gcn_n_layes,
-                 'drop_out': args.drop_out,
-                #  'n_heads': args.n_heads,
-                #  'alpha': args.alpha,
-                #  'beta': args.beta,
-                #  'clip_grad': args.clip_grad,
-                #  'patience': args.patience,
-                #  'optimizer': args.optimizer,
-                #  'scheduler': args.scheduler,
+    name_dict = {
+        'model': args.model,
+        'n_epochs': args.n_epochs,
+        'batch_size': args.batch_size,
+        'lr': args.lr,
+        'max_seq_len': args.max_seq_len,
+        'hidden_dim': args.hidden_dim,
                  }
     
     name = ''
     for key, value in name_dict.items():
         name += f'{key}_{value}, '
         
-    # name = f'{args.model}, seq_len {args.max_seq_len}, hidden_dim {args.hidden_dim}, n_layers {args.n_layers}, batch_size {args.batch_size}, lr {args.lr}__{int(random.random() * 10)}'
     
     wandb.init(project="ges", config=vars(args), name=name)
     model = trainer.get_model(args, adj_matrix).to(args.device)

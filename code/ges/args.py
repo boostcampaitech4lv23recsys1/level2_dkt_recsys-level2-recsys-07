@@ -51,9 +51,10 @@ def parse_args():
     parser.add_argument("--gcn_n_layes", default=2, type=int, help="gcn layers")
     parser.add_argument('--alpha', type=float, default=1.0, help="weight of seq Adj")
     parser.add_argument('--beta', type=float, default=1.0, help="weight of sem Adj")
+    
 
     # 훈련
-    parser.add_argument("--n_epochs", default=50, type=int, help="number of epochs")
+    parser.add_argument("--n_epochs", default=1, type=int, help="number of epochs")
     parser.add_argument("--batch_size", default=32, type=int, help="batch size")
     parser.add_argument("--lr", default=0.000001, type=float, help="learning rate")
     parser.add_argument("--clip_grad", default=10, type=int, help="clip grad")
