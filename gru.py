@@ -12,15 +12,13 @@ from tqdm import tqdm_notebook
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
 from sklearn.model_selection import train_test_split  
 
-os.makedirs('level2_dkt_recsys-level2-recsys-07/output', exist_ok=True)
+
 
 
 
 
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
-data=pd.read_csv('/opt/ml/new/level2_dkt_recsys-level2-recsys-07/data/train_data.csv')
-test = pd.read_csv('/opt/ml/new/level2_dkt_recsys-level2-recsys-07/data/test_data.csv')
 
 data = data[['userID','assessmentItemID','testId','Timestamp','KnowledgeTag','answerCode']]
 test = test[['userID','assessmentItemID','testId','Timestamp','KnowledgeTag','answerCode']]
@@ -111,22 +109,3 @@ for epoch in range(num_epochs):
 # X_train_tensors_f = torch.reshape(X_train_tensors,   (X_train_tensors.shape[0], 1, X_train_tensors.shape[1]))
 # X_test_tensors_f = torch.reshape(X_test_tensors,  (X_test_tensors.shape[0], 1, X_test_tensors.shape[1])) 
 
-
-X_t=test.iloc[:,:-1]
-y_t=test.iloc[:,-1:]
-
-X_t_tensors = Variable(torch.Tensor(X_t.values)).to(device)
-y_t_tensors = Variable(torch.Tensor(y_t.values)).to(device)
-
-X_t_tensors_f = torch.reshape(X_t_tensors,   (X_t_tensors.shape[0], 1, X_t_tensors.shape[1])).to(device)
-
-
-print("Training Shape", X_t_tensors_f.shape, y_t_tensors.shape)
-
-
-predict = model(X_t_tensors_f).to(device)
-predicted = predict.cpu().detach().numpy()
-print(predicted)
-print(len(predicted))
-submission = pd.DataFrame(predicted)
-submission.to_csv('/opt/ml/new/level2_dkt_recsys-level2-recsys-07/output/aaasubmission.csv')
