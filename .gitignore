@@ -202,3 +202,5 @@ cython_debug/
 *.docx
 *.pdf
 *.xlsx
+*wandb/
+*.pt

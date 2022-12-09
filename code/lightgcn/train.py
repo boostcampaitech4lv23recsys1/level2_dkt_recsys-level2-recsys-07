@@ -3,13 +3,25 @@ import torch
 from config import CFG, logging_conf
 from lightgcn.datasets import prepare_dataset
 from lightgcn.models import build, train, train_with_scheduler
-from lightgcn.utils import class2dict, get_logger
+from lightgcn.utils import class2dict, get_logger, setSeeds
+from args import parse_args
+import random
+
+
+CFG = parse_args()
+
+# run name
+rand = int(random.random()*100)
+run_name = f'lightgcn, embedding_dim {CFG.embedding_dim}, num_layers {CFG.num_layers}, n_epoch {CFG.n_epoch}, learning_rate {CFG.learning_rate}, __{rand}__'
+
+# setSeed
+setSeeds(CFG.seed)
 
 if CFG.user_wandb:
     import wandb
 
     # wandb.init(**CFG.wandb_kwargs, config=class2dict(CFG))
-    wandb.init(**CFG.wandb_kwargs, config=class2dict(CFG), name=CFG.run_name)
+    wandb.init(**CFG.wandb_kwargs, config=class2dict(CFG), name=run_name)
     
     
 
