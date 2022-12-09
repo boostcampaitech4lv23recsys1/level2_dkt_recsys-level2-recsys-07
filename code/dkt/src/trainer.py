@@ -11,6 +11,7 @@ from .model import LSTM, LSTMATTN, Bert, CustomBert
 from .optimizer import get_optimizer
 from .scheduler import get_scheduler
 from datetime import datetime
+from torch.utils.data import TensorDataset
 
 
 def run(args, train_data, valid_data, model):
@@ -285,6 +286,7 @@ def get_model(args):
 # 배치 전처리
 def process_batch(batch):
 
+    # test, question, tag, correct, total_cnt, test_cnt, tag_cnt, test_cor, ass_cor, avg_cor, mask = batch    #TODO
     test, question, tag, correct, mask = batch
 
     # change to float
@@ -299,11 +301,19 @@ def process_batch(batch):
     interaction = (interaction * interaction_mask).to(torch.int64)
 
     #  test_id, question_id, tag
-    test = ((test + 1) * mask).int()
+    test = ((test + 1) * mask).int()            
     question = ((question + 1) * mask).int()
     tag = ((tag + 1) * mask).int()
+    # total_cnt = ((total_cnt + 1) * mask).int()      #TODO
+    # test_cnt = ((test_cnt + 1) * mask).int()
+    # tag_cnt = ((tag_cnt + 1) * mask).int()
+    # test_cor = ((test_cor + 1) * mask).int()
+    # ass_cor = ((ass_cor + 1) * mask).int()
+    # avg_cor = ((avg_cor + 1) * mask).int()
 
-    return (test, question, tag, correct, mask, interaction)
+
+    # return (test, question, tag, correct, total_cnt, test_cnt, tag_cnt, test_cor, ass_cor, avg_cor, mask, interaction)
+    return (test, question, tag, correct, mask, interaction)  #TODO
 
 
 # loss계산하고 parameter update!

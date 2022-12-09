@@ -2,6 +2,7 @@ import os
 
 import torch
 import wandb
+import numpy as np
 from args import parse_args
 from src import trainer
 from src.dataloader import Preprocess
@@ -19,7 +20,7 @@ def main(args):
     preprocess.load_train_data(args.file_name)
     train_data = preprocess.get_train_data()
 
-    train_data, valid_data = preprocess.split_data(train_data)
+    # train_data, valid_data = preprocess.split_data(args, train_data)
 
     name = datetime.now().strftime('%H%M%S')+"_"+ args.model
     wandb.init(project="dkt", config=vars(args), name=name)
