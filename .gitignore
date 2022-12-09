@@ -202,5 +202,13 @@ cython_debug/
 *.docx
 *.pdf
 *.xlsx
+<<<<<<< HEAD
 *wandb/
 *.pt
+=======
+*.json
+*.txt
+*.wandb
+*.yaml
+*.npy
+>>>>>>> jh
