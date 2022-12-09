@@ -79,8 +79,8 @@ if __name__ == "__main__":
     arg('--SEED', type=int, default=42, help='seed 값을 조정할 수 있습니다.')
 
     ############### TRAINING OPTION
-    arg('--EPOCHS', type=int, default=1000, help='Epoch 수를 조정할 수 있습니다.')
-    arg('--LR', type=float, default=0.1, help='Learning Rate를 조정할 수 있습니다.')
+    arg('--EPOCHS', type=int, default=5000, help='Epoch 수를 조정할 수 있습니다.')
+    arg('--LR', type=float, default=0.5, help='Learning Rate를 조정할 수 있습니다.')
 
     ############### GPU
     arg('--DEVICE', type=str, default='cuda', choices=['cuda', 'cpu'], help='학습에 사용할 Device를 조정할 수 있습니다.')
