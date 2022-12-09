@@ -82,43 +82,43 @@ class Preprocess:
 
     def __feature_engineering(self, df, is_train):
         # TODO
-        if is_train:
-            # 푼 문제 수 누적합
-            df['past_count'] = df.groupby('userID').cumcount()
-            # user별 푼 문제 총합
-            total_count = df.groupby('userID')[['testId']].count().rename(columns={"testId":"total_count"})
-            df = pd.merge(df, total_count, on='userID', how='left')
-            # user별 푼 시험지, 문제, 태그 종류 수
-            test_count = df.groupby('userID')[['testId']].nunique().rename(columns={"testId":"test_count"})
-            assess_count = df.groupby('userID')[['assessmentItemID']].nunique().rename(columns={"assessmentItemID":"assess_count"})
-            tag_count = df.groupby('userID')[['KnowledgeTag']].nunique().rename(columns={"KnowledgeTag":"tag_count"})
-            test_correct = (df.groupby('testId')[['answerCode']].sum()*1000 / 
-                        df.groupby('testId')[['answerCode']].count()).rename(columns={'answerCode':'test_correct'})
-            assess_correct = (df.groupby('assessmentItemID')[['answerCode']].sum()*1000 / 
-                            df.groupby('assessmentItemID')[['answerCode']].count()).rename(columns={'answerCode':'assess_correct'})
-            df = pd.merge(df, test_count, on='userID', how='left')
-            df = pd.merge(df, assess_count, on='userID', how='left')
-            df = pd.merge(df, tag_count, on='userID', how='left')
-            df = pd.merge(df, test_correct, on='testId', how='left')
-            df = pd.merge(df, assess_correct, on='assessmentItemID', how='left')
-            df['test_correct'] = df['test_correct'].fillna(0).astype(int)
-            df['assess_correct'] = df['assess_correct'].fillna(0).astype(int)
+        # if is_train:
+        #     # 푼 문제 수 누적합
+        #     df['past_count'] = df.groupby('userID').cumcount()
+        #     # user별 푼 문제 총합
+        #     total_count = df.groupby('userID')[['testId']].count().rename(columns={"testId":"total_count"})
+        #     df = pd.merge(df, total_count, on='userID', how='left')
+        #     # user별 푼 시험지, 문제, 태그 종류 수
+        #     test_count = df.groupby('userID')[['testId']].nunique().rename(columns={"testId":"test_count"})
+        #     assess_count = df.groupby('userID')[['assessmentItemID']].nunique().rename(columns={"assessmentItemID":"assess_count"})
+        #     tag_count = df.groupby('userID')[['KnowledgeTag']].nunique().rename(columns={"KnowledgeTag":"tag_count"})
+        #     test_correct = (df.groupby('testId')[['answerCode']].sum()*1000 / 
+        #                 df.groupby('testId')[['answerCode']].count()).rename(columns={'answerCode':'test_correct'})
+        #     assess_correct = (df.groupby('assessmentItemID')[['answerCode']].sum()*1000 / 
+        #                     df.groupby('assessmentItemID')[['answerCode']].count()).rename(columns={'answerCode':'assess_correct'})
+        #     df = pd.merge(df, test_count, on='userID', how='left')
+        #     df = pd.merge(df, assess_count, on='userID', how='left')
+        #     df = pd.merge(df, tag_count, on='userID', how='left')
+        #     df = pd.merge(df, test_correct, on='testId', how='left')
+        #     df = pd.merge(df, assess_correct, on='assessmentItemID', how='left')
+        #     df['test_correct'] = df['test_correct'].fillna(0).astype(int)
+        #     df['assess_correct'] = df['assess_correct'].fillna(0).astype(int)
 
-            # 과거에 맞춘 문제 수
-            df['shift'] = df.groupby('userID')['answerCode'].shift().fillna(0)
-            df['past_correct'] = df.groupby('userID')['shift'].cumsum()
-            # 과거 평균 정답률
-            # df['average_correct'] = (df['past_correct'] / df['past_count']).fillna(0)
-            df['avg_cor'] = (df.groupby(['userID'])['answerCode'].sum()*1000 / df.groupby(['userID'])['answerCode'].count())
-            df['avg_cor'] = df['avg_cor'].fillna(0).astype(int)
+        #     # 과거에 맞춘 문제 수
+        #     df['shift'] = df.groupby('userID')['answerCode'].shift().fillna(0)
+        #     df['past_correct'] = df.groupby('userID')['shift'].cumsum()
+        #     # 과거 평균 정답률
+        #     # df['average_correct'] = (df['past_correct'] / df['past_count']).fillna(0)
+        #     df['avg_cor'] = (df.groupby(['userID'])['answerCode'].sum()*1000 / df.groupby(['userID'])['answerCode'].count())
+        #     df['avg_cor'] = df['avg_cor'].fillna(0).astype(int)
 
-            df = df.drop(['shift', "past_count", "assess_count", "past_correct","total_count", "test_count", "assess_count", "tag_count", 'test_correct', 'assess_correct', 'avg_cor'], axis=1) 
-            #
-            print(f'features: {df.columns.tolist()}')
-        else:
-            # df = df.drop([ "test_count", "tag_count", 'test_correct', 'assess_correct', 'avg_cor'], axis=1)
-            #"total_count",
-            pass
+        #     df = df.drop(['shift', "past_count", "assess_count", "past_correct","total_count", "test_count", "assess_count", "tag_count", 'test_correct', 'assess_correct', 'avg_cor'], axis=1) 
+        #     #
+        #     print(f'features: {df.columns.tolist()}')
+        # else:
+        #     # df = df.drop([ "test_count", "tag_count", 'test_correct', 'assess_correct', 'avg_cor'], axis=1)
+        #     #"total_count",
+        #     pass
         return df
 
     def load_data_from_file(self, file_name, is_train=True):
