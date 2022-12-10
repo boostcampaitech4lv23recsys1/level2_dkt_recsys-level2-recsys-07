@@ -3,6 +3,7 @@
 <img src="https://github.com/zhuty16/GES/blob/master/framework.jpg?raw=true">
 
 [Graph-Based Embedding Smoothing for Sequential Recommendation 논문](https://ieeexplore.ieee.org/abstract/document/9405450)
+[Graph-Based Embedding Smoothing 원작자 깃허브](https://github.com/zhuty16/GES)
 
 ## Dependency Install
 
@@ -54,13 +55,9 @@ python inference.py --model NAME
 
 ``` python
 --n_epochs, default=1, type=int, help="number of epochs"
-
 --batch_size, default=32, type=int, help="batch size"
-
 --lr, default=0.000001, type=float, help="learning rate"
-
 --clip_grad, default=10, type=int, help="clip grad"
-
 --patience, default=10, type=int, help="for early stopping"
 ```
 
