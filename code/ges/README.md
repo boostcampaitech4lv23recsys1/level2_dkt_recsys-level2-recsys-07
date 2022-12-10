@@ -2,7 +2,8 @@
 
 <img src="https://github.com/zhuty16/GES/blob/master/framework.jpg?raw=true">
 
-[Graph-Based Embedding Smoothing for Sequential Recommendation 논문](https://ieeexplore.ieee.org/abstract/document/9405450)
+[Graph-Based Embedding Smoothing for Sequential Recommendation 논문](https://ieeexplore.ieee.org/abstract/document/9405450)  
+
 [Graph-Based Embedding Smoothing 원작자 깃허브](https://github.com/zhuty16/GES)
 
 ## Dependency Install
